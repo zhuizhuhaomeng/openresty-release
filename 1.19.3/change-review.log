@@ -1,0 +1,150 @@
+name, ver, changes, describes
+
+xss-nginx-module, , , , # pass
+ngx_devel_kit, , , , # pass
+ngx_coolkit, , , , # pass
+rds-csv-nginx-module, , , , # pass
+lua-redis-parser, , , , # pass
+lua-resty-memcached, , , , # pass
+lua-resty-limit-traffic, , , , # pass
+lua-resty-string, , , , # pass
+lua-resty-lrucache, , , , # pass
+lua-tablepool, , , , # pass
+lua-resty-shell, , , , # pass
+
+echo-nginx-module, 0.62, 1 new commit, 只是改了一行文档，不确定是否要打 v0.63rc1 的 tag # ??
+set-misc-nginx-module, v0.32, 7 new commits, 代码风格，文档 typo，和文档更新，没有代码改动 # !!
+rds-misc-nginx-module, v0.15, 6 new commits, 代码风格，travis 微调 # !!
+headers-more-nginx-module, v0.33, 10 commits, travis 微调，文档更新 # !!
+drizzle-nginx-module, v0.1.11, 7 commits, travis 微调，文档更新 # !!
+lua-upstream-nginx-module, v0.07, 15 new commits, 文档和测试用例的更新 # !!
+array-var-nginx-module, v0.05, 6 new commits, 文档和测试用例更新 # !!
+memc-nginx-module, v0.19, 7 commits, 文档和测试用例更新 # ??
+srcache-nginx-module, v0.32, 1 commits, 仅文档更新 # ??
+form-input-nginx-module, v0.12, 3 commits, 测试用例和文档更新 # ??
+iconv-nginx-module, v0.14, 3 commits, 测试用例更新 # ??
+encrypted-session-nginx-module, v0.08, 1 commits, 仅文档 # ??
+ngx_postgres, 1.0, 5 commits, 代码风格修改，测试工具更新 # !!
+redis2-nginx-module, v0.15, 6 commits, travis 修改，文档更新 # ??
+lua-rds-parser, v0.06, 文档修改, 测试修改 # ??
+lua-resty-dns, v0.21, 8 new commits, 文档以及测试用例修改 # ??
+lua-resty-upload, v0.10, 5 new commits, 文档和测试 # ??
+lua-resty-lock, v0.08, 5 new commits, 测试 # ??
+lua-resty-upstream-healthcheck, v0.06, 5 commits, 测试 # ??
+lua-resty-signal, v0.02, 5 commits, 
+
+lua-nginx-module, v0.10.17, 32 commits, # @@
+stream-lua-nginx-module, v0.0.8, 8 new commits, # @@
+resty-cli, v0.25 -> v0.27rc1, 4 new commits, # @@
+opm, v0.0.5, 3 commits, # @@
+luajit2, v2.1-20200102, 34 commits, # @@
+lua-cjson, 2.1.0.8, 22 commits, # @@
+lua-resty-redis, v0.28, 4 commits, # @@
+lua-resty-mysql, v0.21 -> v0.22, 6 commits, # @@
+lua-resty-websocket, v0.07, 8 commits, # @@
+lua-resty-core, v0.1.19, 5 commits, # @@
+
+--- lua-nginx-module
+    * bugfix: the format in argerror messages are incorrect (#1787)
+    * bugfix: when recreating balancer buffer, remove existing buffers first (#1770)
+    * bugfix: added missing SSL feature macro (#1776)
+    * feature: shared ngx.ctx among SSL_* phases and the following phases. (#1514)
+    * feature(socket.tcp): enhance the logic of parameter verification in connect
+    * doc: ported recent changes in mardkown to the wiki file.
+    * bugfix: the body size may overflow since the size_t is only int32 in 32-bit system (#1756)
+    * doc: ngx.var.VARIABLE is available in the balancer_by_lua* context (#1761)
+    * doc: fixed the wrong phase for lua_need_request_body (#1758)
+    * feature: added the `ngx_http_lua_ffi_balancer_recreate_request` FFI function to allow recreation of request buffer in balancer phase. (#1734)
+    * feature: add FFI interface to verify SSL client certificate (#1666)
+    * feature: added exit_worker_by* to run Lua code upon nginx worker process exit. (#1682)
+    * optimize: avoided use of lua_tolstring in ngx_http_lua_calc_strlen_in_table, ngx_http_lua_copy_str_in_table, ngx_http_lua_socket_udp_send, log_wrapper and ngx_http_lua_ngx_echo.
+    * feature: supported receiveany on ngx.req.socket(true?) socks (#1623)
+    * refactor: used 'yieldable context' to simpify the context list.
+    * doc: fixed an unclosed <code> tag breaking the markup.
+---
+
+--- stream-lua-nginx-module
+    * bugfix: added missing SSL feature macro (#211)
+    * feature: shared ngx.ctx among SSL_* phases and the following phases. (#208)
+    * chore: removed unwanted CC_TEST_FLAGS when checking LuaJIT's FFI feature. (#192)
+    * bugfix: the stream subsystem was built incorrectly in debug mode. (#207)
+    * bugfix: hide get_request API in stream subsystem (#201)
+    * feature: add FFI interface to verify SSL client certificate (#190)
+---
+
+--- resty-cli
+    * bugfix: resty: the tmp directory has not been deleted. (#58)
+    * feature: resty: now we cache the original ngx.say/ngx.print functions into ngx.orig_say and ngx.orig_print since some times the user would need them.
+    * feature: resty: added new option '--stream-conf CONF'.
+---
+
+--- opm
+    * feature: web: support displaying and searching package docs. (#81)
+    * Print usage if no command specified.
+    * improvements for the website UI (#65)
+---
+
+--- luajit2
+    * FFI: Always fall back to metamethods for cdata length/concat.
+      Thanks to Egor Skriptunoff.
+    * Windows: Make actual use of internal allocator optimization.
+      Thanks to Nicholas Ham.
+    * Patch for PPC64 support
+    * Fix overflow check in unpack().
+      Thanks to HybridDog.
+    * Fix Windows make clean.
+      FFI/ARM64: Fix pass-by-value struct calling conventions.
+    * Fix write barrier for lua_setupvalue() and debug.setupvalue().
+    * Make string to number conversions fail on NUL char.
+      Contributed by Igor Munkin.
+    * x86/x64: Fix loop realignment.
+    * Fix POSIX install with missing or incompatible ldconfig.
+    * Fix C file generation in jit.bcsave.
+      Thanks to codicodi.
+    * Remove support for de-facto dead archs.
+    * DynASM/x86: Fix BMI instructions.
+      Thanks to Peter Cawley.
+    * MIPS: Add MIPS64 R6 port.
+      Contributed by Hua Zhang, YunQiang Su from Wave Computing,
+      and Radovan Birdic from RT-RK.
+      Sponsored by Wave Computing.
+    * Fix string.char() recording with no arguments.
+    * Followup fix for embedded bytecode loader.
+    * Fix embedded bytecode loader.
+---
+
+--- lua-cjson
+    * ignore dtoa.c for cppcheck, don't share lua headers (breaks due to define)
+    * support error message testing for modern versions of lua
+    * use macro instead of header defines for Lua 5.2+ support
+    * Lua 5.2+ maxn support
+    * Lua 5.2+ unpack support
+    * support lua 5.3 with LUA_COMPAT_5_1
+    * support lua 5.2 with LUA_COMPAT_ALL
+---
+
+--- lua-resty-redis
+    * bugfix: reimplement unsubscribe mechanism (#196)
+    * bugfix: lack close() when receive timeout
+    * bugfix: connect to unix socket without opts table (#200)
+---
+
+--- lua-resty-mysql
+    * feature: support sha256 plugin to auth (#105)
+    * feature: add connection backlog support, #106
+    * bumped version to 0.22.
+    * feature: support using in stream subsystem.
+---
+
+--- lua-resty-websocket
+    * optimization: using cdata instead lua table for generating masked payload (#49)
+    * feature: support adding custom headers during handshake (#29)
+---
+
+--- lua-resty-core
+    * feature: shared ngx.ctx among SSL_* phases and the following phases. (#243)
+    * bugfix: added the missing 'ngx.req.start_time' to the stream subsystem.
+    * feature: add the `balancer.recreate_request` function, which allows user to recreate request buffer in balancer phase. (#302)
+    * feature: implemented the new ssl.verify_client() API to require a client certificate during TLS handshake (#289)
+    * feature: add exit_worker as new phase
+---
