@@ -13,25 +13,26 @@ lua-tablepool, , , , # pass
 lua-resty-shell, , , , # pass
 
 echo-nginx-module, 0.62, 1 new commit, 只是改了一行文档，不确定是否要打 v0.63rc1 的 tag # ??
-set-misc-nginx-module, v0.32, 7 new commits, 代码风格，文档 typo，和文档更新，没有代码改动 # !!
-rds-misc-nginx-module, v0.15, 6 new commits, 代码风格，travis 微调 # !!
-headers-more-nginx-module, v0.33, 10 commits, travis 微调，文档更新 # !!
-drizzle-nginx-module, v0.1.11, 7 commits, travis 微调，文档更新 # !!
-lua-upstream-nginx-module, v0.07, 15 new commits, 文档和测试用例的更新 # !!
-array-var-nginx-module, v0.05, 6 new commits, 文档和测试用例更新 # !!
+headers-more-nginx-module, v0.33, 10 commits, travis 微调，文档更新 # ??
+drizzle-nginx-module, v0.1.11, 7 commits, travis 微调，文档更新 # ??
+lua-upstream-nginx-module, v0.07, 15 new commits, 文档和测试用例的更新 # ??
+array-var-nginx-module, v0.05, 6 new commits, 文档和测试用例更新 # ??
 memc-nginx-module, v0.19, 7 commits, 文档和测试用例更新 # ??
 srcache-nginx-module, v0.32, 1 commits, 仅文档更新 # ??
 form-input-nginx-module, v0.12, 3 commits, 测试用例和文档更新 # ??
 iconv-nginx-module, v0.14, 3 commits, 测试用例更新 # ??
 encrypted-session-nginx-module, v0.08, 1 commits, 仅文档 # ??
-ngx_postgres, 1.0, 5 commits, 代码风格修改，测试工具更新 # !!
 redis2-nginx-module, v0.15, 6 commits, travis 修改，文档更新 # ??
 lua-rds-parser, v0.06, 文档修改, 测试修改 # ??
 lua-resty-dns, v0.21, 8 new commits, 文档以及测试用例修改 # ??
 lua-resty-upload, v0.10, 5 new commits, 文档和测试 # ??
 lua-resty-lock, v0.08, 5 new commits, 测试 # ??
 lua-resty-upstream-healthcheck, v0.06, 5 commits, 测试 # ??
-lua-resty-signal, v0.02, 5 commits, 
+lua-resty-signal, v0.02, 5 commits, 测试 # ??
+
+ngx_postgres, 1.0, 5 commits, 代码风格修改，测试工具更新 # !!
+set-misc-nginx-module, v0.32, 7 new commits, 代码风格，文档 typo，和文档更新，没有代码改动 # !!
+rds-json-nginx-module, v0.15, 6 new commits, 代码风格，travis 微调 # !!
 
 lua-nginx-module, v0.10.17, 32 commits, # @@
 stream-lua-nginx-module, v0.0.8, 8 new commits, # @@
