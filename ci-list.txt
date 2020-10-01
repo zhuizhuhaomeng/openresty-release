@@ -1,0 +1,26 @@
+# lua-nginx-module
+# stream-lua-nginx-module
+resty-cli
+# lua-resty-redis
+lua-resty-core
+lua-resty-mysql
+lua-resty-websocket
+drizzle-nginx-module
+echo-nginx-module
+headers-more-nginx-module
+lua-resty-dns
+lua-resty-limit-traffic
+lua-resty-lock
+lua-resty-lrucache
+lua-resty-memcached
+lua-resty-shell
+lua-resty-signal
+lua-resty-string
+lua-resty-upstream-healthcheck
+lua-resty-websocket
+lua-upstream-nginx-module
+memc-nginx-module
+rds-json-nginx-module
+redis2-nginx-module
+set-misc-nginx-module
+srcache-nginx-module
