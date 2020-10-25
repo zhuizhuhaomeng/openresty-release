@@ -1,26 +1,37 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Getopt::Std;
+use Getopt::Long;
 use Smart::Comments;
 
 sub sh($);
 
-getopts('f:lc', \my %opts);
+my ($file, $show_log, $log_only, $count, $mods);
 
-my $file = delete $opts{f} # mirror-tarballs path in openresty/util/
-    or die "please specifiy your mirror-tarballs path";
-my $log = delete $opts{l}; # view git log since tag in current openresty
-my $count = delete $opts{c}; # count git commits and compare the latest tag with current openresty
+GetOptions(
+    'f=s' => \$file,
+    'm=s@' => \$mods, # module names
+    'l' => \$show_log, # view git log since tag in current openresty
+    'o' => \$log_only,
+    'c' => \$count, # count git commits and compare the latest tag with current openresty
+);
 
-open my $fh, $file or die "cannot open $file for read: $!";
+# mirror-tarballs path in openresty/util/
+die "please specifiy your mirror-tarballs path"
+    if !defined $file;
+
+open my $fh, "<", $file or die "cannot open $file for read: $!";
+
+my %repo_branch = (
+    'luajit2' => 'v2.1-agentzh'
+);
 
 my $ver;
 while (<$fh>) {
     chomp;
 
     my $line = $_;
-    if (m{^ver=([v\d.-]+)}) {
+    if (m{^ver=([v\d.-]+(rc\d+)?)}) {
         $ver = $1;
     }
 
@@ -33,10 +44,22 @@ while (<$fh>) {
             next;
         }
 
+        if (defined($mods) && !grep {$name eq $_} @$mods) {
+            next;
+        }
+
         my ($repo_addr) = $repo =~ m{^(https?://.*)/(archive|tarball)};
         my ($repo_name) = $repo_addr =~ m{/([^/]+)(?:.git)?$};
 
         if (-d $repo_name) {
+            my $branch = sh "git -C $repo_name branch --show-current";
+            my $is_clean = sh "git -C $repo_name status -s -u no";
+            my $br = $repo_branch{$repo_name} // 'master';
+
+            if ($branch ne $br || $is_clean ne "") {
+                warn "WARN: $repo_name br: $branch, clean: $is_clean";
+                next;
+            }
             sh "cd $repo_name && git pull";
         } else {
             sh "git clone $repo_addr $repo_name";
@@ -60,9 +83,12 @@ while (<$fh>) {
             $pass = 0;
         }
 
-        if ($commit_count > 0 && $log && $tag) {
-            printf "------ diff log --------\n";
-            printf "%s\n", sh "cd $repo_name && git log -p $tag..HEAD";
+        if (($pass == 0) && ($show_log || $log_only) && $tag) {
+            printf "------ diff log $repo_name --------\n";
+
+            my $git_opt = $show_log ? "-p" : "--pretty=format:\"- %s -- %an\"";
+            printf "%s\n", sh "cd $repo_name && git log $git_opt $tag..HEAD";
+
             printf "------ diff log end --------\n";
         }
 
@@ -72,12 +98,12 @@ while (<$fh>) {
             printf "** Summary: check here $repo_addr\n";
         }
 
-        printf "===================== END %.20s =================================\n", $name;
+        printf "===================== END %.30s =================================\n", $name;
     }
 }
 
 sub sh ($) {
-    warn "cmd: $_[0]";
+    # warn "cmd: $_[0]";
 
     my $out = `$_[0]`;
     if ($?) {

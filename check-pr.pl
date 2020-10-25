@@ -16,7 +16,7 @@ while (<>) {
 
     printf "$repo: $ci_status\n";
     if ($ci_status eq 'failure') {
-        system "cd $repo && gh pr checks -R openresty/$repo xiaocang:$br || true";
+        system "cd $repo && gh pr checks -R openresty/$repo $br || true";
     }
 }
 
