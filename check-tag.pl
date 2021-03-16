@@ -6,99 +6,151 @@ use Smart::Comments;
 
 sub sh($);
 
-my ($file, $show_log, $log_only, $count, $mods);
+my ($openresty_dir, $show_log, $log_only, $count, $mods, $new_tag, $old_tag,
+    $force_pull);
 
 GetOptions(
-    'f=s' => \$file,
+    'd=s' => \$openresty_dir,
     'm=s@' => \$mods, # module names
     'l' => \$show_log, # view git log since tag in current openresty
     'o' => \$log_only,
     'c' => \$count, # count git commits and compare the latest tag with current openresty
+    'old-tag=s' => \$old_tag,
+    'new-tag=s' => \$new_tag,
+    'force-pull|f' => \$force_pull,
 );
+
+$openresty_dir //= "openresty";
+$new_tag //= "HEAD";
+
+die "specifiy the old tag for openresty"
+    if !defined $old_tag;
 
 # mirror-tarballs path in openresty/util/
 die "please specifiy your mirror-tarballs path"
-    if !defined $file;
-
-open my $fh, "<", $file or die "cannot open $file for read: $!";
+    if !-d $openresty_dir;
 
 my %repo_branch = (
     'luajit2' => 'v2.1-agentzh'
 );
 
-my $ver;
-while (<$fh>) {
-    chomp;
+my $pretty_format = 'format:"    * %s _Thanks %an for the patch._"';
 
-    my $line = $_;
-    if (m{^ver=([v\d.-]+(rc\d+)?)}) {
-        $ver = $1;
-    }
+sub git_tags ($;$);
+sub git_diff ($$);
+sub commits_since_tag ($$);
 
-    if (!m{^#} && m{util/get-tarball "(https?://[^"]+)" -O "?([^\$]+)-\$ver}) {
-        my ($repo, $name) = ($1, $2);
+my $old_ref = git_tags($old_tag);
+my $new_ref = git_tags($new_tag, $force_pull);
+git_diff($old_ref, $new_ref);
 
-        # NB: https://people.freebsd.org/~osa/ngx_http_redis-$ver.tar.gz
-        if ($name =~ m{^nginx|redis-nginx-module$}) {
-            $ver = undef;
-            next;
+sub git_tags ($;$) {
+    my ($or_tag, $git_pull) = @_;
+
+    my $tag_ref;
+
+    # open my $fh, "<", $file or die "cannot open $file for read: $!";
+    my @lines = do {
+        my $data;
+
+        if ($or_tag ne 'HEAD') {
+            $data = sh "git -C \"$openresty_dir\" "
+                     . "show \"v$or_tag:util/mirror-tarballs\"";
+        } else {
+            my $fh;
+            open $fh, "<", "$openresty_dir/util/mirror-tarballs"
+                or die "$!";
+            $data = do { local $/; <$fh> };
+            close $fh;
         }
 
-        if (defined($mods) && !grep {$name eq $_} @$mods) {
-            next;
+        split /\r?\n/, $data;
+    };
+
+    my $ver;
+    for (@lines) {
+        if (m{^ver=([v\d.-]+(rc\d+)?)}) {
+            $ver = $1;
         }
 
-        my ($repo_addr) = $repo =~ m{^(https?://.*)/(archive|tarball)};
-        my ($repo_name) = $repo_addr =~ m{/([^/]+)(?:.git)?$};
+        if (!m{^#} && m{util/get-tarball "(https?://[^"]+)" -O "?([^\$]+)-\$ver}) {
+            my ($repo, $name) = ($1, $2);
 
-        if (-d $repo_name) {
-            my $branch = sh "git -C $repo_name branch --show-current";
-            my $is_clean = sh "git -C $repo_name status -s -u no";
-            my $br = $repo_branch{$repo_name} // 'master';
-
-            if ($branch ne $br || $is_clean ne "") {
-                warn "WARN: $repo_name br: $branch, clean: $is_clean";
+            # NB: https://people.freebsd.org/~osa/ngx_http_redis-$ver.tar.gz
+            if ($name =~ m{^nginx|redis-nginx-module$}) {
+                $ver = undef;
                 next;
             }
-            sh "cd $repo_name && git pull";
+
+            if (defined($mods) && !grep {$name eq $_} @$mods) {
+                next;
+            }
+
+            my ($repo_addr) = $repo =~ m{^(https?://.*)/(archive|tarball)};
+            my ($repo_name) = $repo_addr =~ m{/([^/]+)(?:.git)?$};
+
+            if (-d $repo_name) {
+                my $branch = sh "git -C $repo_name branch --show-current";
+                my $is_clean = sh "git -C $repo_name status -s -u no";
+                my $br = $repo_branch{$repo_name} // 'master';
+
+                if ($branch ne $br || $is_clean ne "") {
+                    warn "WARN: $repo_name br: $branch, clean: $is_clean";
+                    next;
+                }
+                if ($git_pull) {
+                    sh "git -C $repo_name pull";
+                }
+            } else {
+                sh "git clone $repo_addr $repo_name";
+            }
+
+            # real version
+            my $tag = sh "cd $repo_name && TAG=\$(git tag -l v$ver); if [ -z \$TAG ]; then git tag -l $ver; else echo \$TAG; fi";
+
+            $tag_ref->{"[$repo_name]($repo_addr)"} = $tag;
+        }
+    }
+
+    return $tag_ref;
+}
+
+sub git_diff ($$) {
+    my ($old_ref, $new_ref) = @_;
+
+    for my $k (keys %$old_ref) {
+        my $otag = $old_ref->{$k};
+        my $ntag = $new_ref->{$k};
+        my ($repo_name) = $k =~ m{\[([^\[\]]+)\]};
+
+        if ($ntag eq 'HEAD') {
+            $ntag = sh "cd $repo_name && git describe --abbrev=0 --tags";
+
+            commits_since_tag($repo_name, $ntag);
+        }
+
+        if ($otag ne $ntag) {
+            warn "# New Tag: $repo_name: $ntag(new) vs $otag";
+            printf "* upgraded $k to $ntag\n";
+
+            my $git_opt = $show_log ? "-p" : "--pretty=$pretty_format";
+            printf "%s\n", sh "git -C $repo_name log $git_opt $otag..$ntag";
+
         } else {
-            sh "git clone $repo_addr $repo_name";
+            warn "# Pass: $repo_name: latest!";
         }
+    }
+}
 
-        my $latest_ver = sh "cd $repo_name && git describe --abbrev=0 --tags";
+sub commits_since_tag ($$) {
+    my ($repo_name, $tag) = @_;
 
-        my $pass = 1;
-        if ($latest_ver !~ m{^v?$ver}) {
-            printf "New Tag\t\t: %s: %.10s(new) vs %.10s\n", $name, $latest_ver, $ver;
-            $pass = 0;
-        }
+    my $commit_count = sh "git -C $repo_name rev-list $tag..HEAD --count";
 
-        # real version
-        my $tag = sh "cd $repo_name && TAG=\$(git tag -l v$ver); if [ -z \$TAG ]; then git tag -l $ver; else echo \$TAG; fi";
-
-        my $commit_count = sh "cd $repo_name && git rev-list $latest_ver..HEAD --count";
-
-        if ($commit_count > 0) {
-            printf "New Commit\t: %s: %d commits since '$latest_ver'\n", $name, $commit_count;
-            $pass = 0;
-        }
-
-        if (($pass == 0) && ($show_log || $log_only) && $tag) {
-            printf "------ diff log $repo_name --------\n";
-
-            my $git_opt = $show_log ? "-p" : "--pretty=format:\"- %s -- %an\"";
-            printf "%s\n", sh "cd $repo_name && git log $git_opt $tag..HEAD";
-
-            printf "------ diff log end --------\n";
-        }
-
-        if ($pass) {
-            printf "Pass\t\t: %s: latest!\n", $name;
-        } else {
-            printf "** Summary: check here $repo_addr\n";
-        }
-
-        printf "===================== END %.30s =================================\n", $name;
+    if ($commit_count > 0) {
+        warn "# New Commit\t: $repo_name: $commit_count commits since '$tag'";
+        my $git_opt = $show_log ? "-p" : "--pretty=$pretty_format";
+        printf "%s\n", sh "git -C $repo_name log $git_opt $tag..HEAD";
     }
 }
 
