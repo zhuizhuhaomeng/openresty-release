@@ -23,7 +23,7 @@ GetOptions(
 $openresty_dir //= "openresty";
 $new_tag //= "HEAD";
 
-die "specifiy the old tag for openresty"
+die "specifiy the --old-tag old tag for openresty"
     if !defined $old_tag;
 
 # mirror-tarballs path in openresty/util/
@@ -123,7 +123,8 @@ sub git_diff ($$) {
         my $ntag = $new_ref->{$k};
         my ($repo_name) = $k =~ m{\[([^\[\]]+)\]};
 
-        if ($ntag eq 'HEAD') {
+        # NB: check commit since last tag
+        if ($new_tag eq 'HEAD') {
             $ntag = sh "cd $repo_name && git describe --abbrev=0 --tags";
 
             commits_since_tag($repo_name, $ntag);
@@ -149,6 +150,7 @@ sub commits_since_tag ($$) {
 
     if ($commit_count > 0) {
         warn "# New Commit\t: $repo_name: $commit_count commits since '$tag'";
+        printf "* $repo_name\t: new commits\n";
         my $git_opt = $show_log ? "-p" : "--pretty=$pretty_format";
         printf "%s\n", sh "git -C $repo_name log $git_opt $tag..HEAD";
     }
