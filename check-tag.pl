@@ -135,7 +135,7 @@ sub git_diff ($$) {
             printf "* upgraded $k to $ntag\n";
 
             my $git_opt = $show_log ? "-p" : "--pretty=$pretty_format";
-            printf "%s\n", sh "git -C $repo_name log $git_opt $otag..$ntag";
+            printf "%s\n", sh "git -C $repo_name log $git_opt $otag..$ntag | grep -E -v '(Merge branch|bumped|Bump copyright date)' | sort";
 
         } else {
             warn "# Pass: $repo_name: latest!";
