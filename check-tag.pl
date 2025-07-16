@@ -135,7 +135,7 @@ sub git_diff ($$) {
             printf "* upgraded $k to $ntag\n";
 
             my $git_opt = $show_log ? "-p" : "--pretty=$pretty_format";
-            printf "%s\n", sh "git -C $repo_name log $git_opt $otag..$ntag | grep -E -v '(Merge branch|bumped|Bump copyright date|update nginx to|upgrade nginx to)' | sort";
+            printf "%s\n", sh "git -C $repo_name log $git_opt $otag..$ntag | grep -E -v '(Merge branch|bumped|Bump copyright date|update nginx to|upgrade nginx to|travis-ci:|tests:)' | sort";
 
         } else {
             warn "# Pass: $repo_name: latest!";
@@ -152,7 +152,7 @@ sub commits_since_tag ($$) {
         warn "# New Commit\t: $repo_name: $commit_count commits since '$tag'";
         printf "* $repo_name\t: new commits\n";
         my $git_opt = $show_log ? "-p" : "--pretty=$pretty_format";
-        printf "%s\n", sh "git -C $repo_name log $git_opt $tag..HEAD | grep -E -v '(Merge branch|bumped|Bump copyright date|update nginx to|upgrade nginx to)' | sort";
+        printf "%s\n", sh "git -C $repo_name log $git_opt $tag..HEAD | grep -E -v '(Merge branch|bumped|Bump copyright date|update nginx to|upgrade nginx to|travis-ci:|tests:)' | sort";
     }
 }
 
