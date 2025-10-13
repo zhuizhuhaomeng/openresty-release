@@ -11,6 +11,7 @@ GetOptions(
     'git-pull' => \my $git_pull,
 );
 
+
 die "-d OPENRESTY_DIR is required but missing"
     unless $openresty_dir;
 die "--branch NEW_BRANCH is required but missing"
@@ -25,7 +26,7 @@ my %repo_branch = (
 );
 
 my $or_tag = 'HEAD';
-my $remote = 'jiahao';
+my $remote = 'origin';
 my $changes = 0;
 
 my @lines = do {
@@ -127,12 +128,18 @@ for (@lines) {
                 sh "git -C $repo_name commit -m 'tests: bumped the NGINX core to $nginx_ver.'";
             }
 
+            # push to remote if it does not exist in the remote repo
+            my $remote_branches = sh "git -C $repo_name branch -a | grep $remote";
+            if ($remote_branches !~ /\/$new_branch/) {
+                sh "git -C $repo_name push $remote $new_branch";
+            }
+
             my $remote_diff = sh "git -C $repo_name diff $remote/$new_branch $new_branch";
             if ($remote_diff) {
                 sh "git -C $repo_name push $remote $new_branch";
 
             } else {
-                my $pr_url = sh "hub -C $repo_name prs || true";
+                my $pr_url = sh "hub -C $repo_name pr list --head $new_branch || true";
                 if ($pr_url) {
                     warn "PR already exists: $pr_url\n";
 
@@ -157,7 +164,7 @@ if (!$changes) {
 }
 
 sub sh ($) {
-    # warn "cmd: $_[0]";
+    warn "cmd: $_[0]";
 
     my $out = `$_[0]`;
     if ($?) {
