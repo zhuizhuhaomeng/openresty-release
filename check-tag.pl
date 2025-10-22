@@ -157,7 +157,7 @@ sub commits_since_tag ($$) {
 }
 
 sub sh ($) {
-    # warn "cmd: $_[0]";
+    warn "cmd: $_[0]";
 
     my $out = `$_[0]`;
     if ($?) {
